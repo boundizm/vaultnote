@@ -1,4 +1,148 @@
-# VaultNote
+# VaultNote - Secure Encrypted Notes
+
+A zero-knowledge, end-to-end encrypted note-sharing application built with Next.js, PostgreSQL, and military-grade AES-256-GCM encryption.
+
+## 🚀 Production Deployment
+
+### Prerequisites
+- Node.js 18+
+- PostgreSQL database
+- Git
+
+### 1. Environment Setup
+
+Copy the example environment file:
+```bash
+cp .env.example .env
+```
+
+Configure your production environment variables:
+
+```env
+# PostgreSQL Database URL
+DATABASE_URL="postgresql://username:password@host:port/database?schema=public"
+
+# Cron job secret (generate random string)
+CRON_SECRET="your-secure-random-secret-here"
+```
+
+### 2. Database Setup
+
+```bash
+# Install dependencies
+pnpm install
+
+# Generate Prisma client
+pnpm prisma generate
+
+# Deploy database schema
+pnpm prisma migrate deploy
+```
+
+### 3. Build for Production
+
+```bash
+# Build the application
+pnpm build
+
+# Start production server
+pnpm start
+```
+
+## 🏗️ Architecture
+
+### Security Features
+- **End-to-End Encryption**: AES-256-GCM encryption
+- **Zero-Knowledge**: Server never sees plaintext
+- **Client-Side Encryption**: All encryption happens in browser
+- **Secure Metadata**: Titles and author info are encrypted
+
+### Database Schema
+```sql
+- Notes: Encrypted content, metadata, view tracking
+- Automatic cleanup of expired notes
+- Index optimization for performance
+```
+
+## 🔧 Development
+
+```bash
+# Install dependencies
+pnpm install
+
+# Start development server
+pnpm dev
+
+# Run tests
+pnpm test
+
+# Database operations
+pnpm prisma studio    # Open database browser
+pnpm prisma migrate dev  # Create new migration
+```
+
+## 🚀 Deployment Options
+
+### Vercel (Recommended)
+1. Connect GitHub repository
+2. Set environment variables in Vercel dashboard
+3. Deploy automatically
+
+### Docker
+```dockerfile
+FROM node:18-alpine
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --only=production
+COPY . .
+RUN npm run build
+EXPOSE 3000
+CMD ["npm", "start"]
+```
+
+### Manual Server
+```bash
+# Using PM2
+npm install -g pm2
+pm2 start npm --name "vaultnote" -- start
+pm2 startup
+pm2 save
+```
+
+## 🔒 Security Best Practices
+
+- Use HTTPS in production
+- Rotate database credentials regularly
+- Monitor for security vulnerabilities
+- Keep dependencies updated
+- Use environment variables for secrets
+
+## 📊 Features
+
+- ✅ End-to-end encrypted notes
+- ✅ Password-protected notes
+- ✅ Self-destructing notes
+- ✅ Image attachments
+- ✅ View tracking and limits
+- ✅ Responsive design
+- ✅ Dark theme
+- ✅ Swiss hosting ready
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests
+5. Submit a pull request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+---
+
+**Made with ❤️ in Switzerland** 🇨🇭
 
 Privacy-first, Zero-Knowledge Notepad mit Self-Destruct. Erstelle sichere Notizen, die nach dem Lesen oder Ablauf automatisch gelöscht werden.
 

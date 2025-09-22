@@ -12,23 +12,23 @@ datasource db {
 
 model Note {
   id              String   @id @default(cuid())
-  titleEncrypted  String?  @db.VarChar
-  ciphertext      Bytes
-  iv              Bytes
+  titleEncrypted  String?
+  ciphertext      String
+  iv              String
   remainingReads  Int?
   expiresAt       DateTime?
   createdAt       DateTime @default(now())
   consumedAt      DateTime?
   destroyToken    String?  @unique
   isProtected     Boolean? @default(false)
-  encryptedKey    String?  @db.VarChar
-  keyIv           String?  @db.VarChar
-  salt            String?  @db.VarChar
+  encryptedKey    String?
+  keyIv           String?
+  salt            String?
   images          String? // JSON string of array: {name: string, data: string, size: number}[]
 
   // Author information (encrypted)
-  authorNameEncrypted  String?  @db.VarChar
-  authorEmailEncrypted String?  @db.VarChar
+  authorNameEncrypted  String?
+  authorEmailEncrypted String?
 
   // View tracking
   viewCount       Int      @default(0)

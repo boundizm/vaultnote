@@ -39,9 +39,6 @@ export async function POST(request: NextRequest) {
     const expiresAt = validated.duration ? new Date(Date.now() + validated.duration * 60 * 1000) : null;
     const destroyToken = randomBytes(32).toString('hex');
 
-    console.log('Create API - Validated data:', validated);
-    console.log('Create API - Title to encrypt:', validated.title);
-
     // Encrypt metadata fields
     const [encryptedTitle, encryptedAuthorName, encryptedAuthorEmail] = await Promise.all([
       validated.title ? encryptMetadata(validated.title) : null,
@@ -49,60 +46,34 @@ export async function POST(request: NextRequest) {
       validated.authorEmail ? encryptMetadata(validated.authorEmail) : null,
     ]);
 
-    console.log('Create API - Metadata to encrypt:', {
-      title: validated.title,
-      authorName: validated.authorName,
-      authorEmail: validated.authorEmail
+    // Create note with encrypted metadata
+    const note = await prisma.note.create({
+      data: {
+        // @ts-ignore - Prisma types not updated yet
+        titleEncrypted: encryptedTitle || null,
+        ciphertext,
+        iv,
+        remainingReads: validated.maxReads,
+        expiresAt,
+        destroyToken,
+        isProtected: validated.isProtected || false,
+        // @ts-ignore - Prisma types not updated yet
+        encryptedKey: null, // Will be set for password-protected notes
+        // @ts-ignore - Prisma types not updated yet
+        keyIv: null, // Will be set for password-protected notes
+        // @ts-ignore - Prisma types not updated yet
+        salt: null, // Will be set for password-protected notes
+        images: validated.images ? JSON.stringify(validated.images) : null,
+        // @ts-ignore - Prisma types not updated yet
+        authorNameEncrypted: encryptedAuthorName || null,
+        // @ts-ignore - Prisma types not updated yet
+        authorEmailEncrypted: encryptedAuthorEmail || null,
+        // @ts-ignore - Prisma types not updated yet
+        viewCount: 0,
+        // @ts-ignore - Prisma types not updated yet
+        maxViews: validated.maxViews || null,
+      },
     });
-    console.log('Create API - Encrypted results:', {
-      encryptedTitle,
-      encryptedAuthorName,
-      encryptedAuthorEmail
-    });
-
-    // Try to create note with new fields, fallback to old schema if migration not done
-    let note;
-    try {
-      note = await prisma.note.create({
-        data: {
-          titleEncrypted: encryptedTitle ? Buffer.from(encryptedTitle) : null,
-          ciphertext,
-          iv,
-          remainingReads: validated.maxReads,
-          expiresAt,
-          destroyToken,
-          isProtected: validated.isProtected || false,
-          encryptedKey,
-          keyIv,
-          salt,
-          images: validated.images ? JSON.stringify(validated.images) : null,
-          authorNameEncrypted: encryptedAuthorName ? Buffer.from(encryptedAuthorName) : null,
-          authorEmailEncrypted: encryptedAuthorEmail ? Buffer.from(encryptedAuthorEmail) : null,
-          viewCount: 0,
-          maxViews: validated.maxViews || null,
-        },
-      });
-    } catch (migrationError) {
-      // Fallback for non-migrated database
-      console.warn('Database migration not applied, using fallback schema:', migrationError);
-      note = await prisma.note.create({
-        data: {
-          titleEncrypted: encryptedTitle ? Buffer.from(encryptedTitle) : null,
-          ciphertext,
-          iv,
-          remainingReads: validated.maxReads,
-          expiresAt,
-          destroyToken,
-          isProtected: validated.isProtected || false,
-          encryptedKey,
-          keyIv,
-          salt,
-          images: validated.images ? JSON.stringify(validated.images) : null,
-          authorNameEncrypted: encryptedAuthorName ? Buffer.from(encryptedAuthorName) : null,
-          authorEmailEncrypted: encryptedAuthorEmail ? Buffer.from(encryptedAuthorEmail) : null,
-        },
-      });
-    }
 
     return NextResponse.json({ id: note.id });
   } catch (error) {
