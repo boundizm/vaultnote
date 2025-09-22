@@ -1,0 +1,38 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Note {
+  id              String   @id @default(cuid())
+  titleEncrypted  Bytes?
+  ciphertext      Bytes
+  iv              Bytes
+  remainingReads  Int?
+  expiresAt       DateTime?
+  createdAt       DateTime @default(now())
+  consumedAt      DateTime?
+  destroyToken    String?  @unique
+  isProtected     Boolean? @default(false)
+  encryptedKey    Bytes?
+  keyIv           Bytes?
+  salt            Bytes?
+  images          String? // JSON string of array: {name: string, data: string, size: number}[]
+
+  // Author information (encrypted)
+  authorNameEncrypted Bytes?
+  authorEmailEncrypted Bytes?
+
+  // View tracking
+  viewCount       Int      @default(0)
+  maxViews        Int?
+
+  @@index([expiresAt])
+}
