@@ -49,29 +49,21 @@ export async function POST(request: NextRequest) {
     // Create note with encrypted metadata
     const note = await prisma.note.create({
       data: {
-        // @ts-ignore - Prisma types not updated yet
-        titleEncrypted: encryptedTitle || null,
-        ciphertext,
-        iv,
+        titleEncrypted: encryptedTitle || undefined,
+        ciphertext: ciphertext.toString('base64'),
+        iv: iv.toString('base64'),
         remainingReads: validated.maxReads,
         expiresAt,
         destroyToken,
         isProtected: validated.isProtected || false,
-        // @ts-ignore - Prisma types not updated yet
-        encryptedKey: null, // Will be set for password-protected notes
-        // @ts-ignore - Prisma types not updated yet
-        keyIv: null, // Will be set for password-protected notes
-        // @ts-ignore - Prisma types not updated yet
-        salt: null, // Will be set for password-protected notes
-        images: validated.images ? JSON.stringify(validated.images) : null,
-        // @ts-ignore - Prisma types not updated yet
-        authorNameEncrypted: encryptedAuthorName || null,
-        // @ts-ignore - Prisma types not updated yet
-        authorEmailEncrypted: encryptedAuthorEmail || null,
-        // @ts-ignore - Prisma types not updated yet
+        encryptedKey: undefined,
+        keyIv: undefined,
+        salt: undefined,
+        images: validated.images ? JSON.stringify(validated.images) : undefined,
+        authorNameEncrypted: encryptedAuthorName || undefined,
+        authorEmailEncrypted: encryptedAuthorEmail || undefined,
         viewCount: 0,
-        // @ts-ignore - Prisma types not updated yet
-        maxViews: validated.maxViews || null,
+        maxViews: validated.maxViews || undefined,
       },
     });
 

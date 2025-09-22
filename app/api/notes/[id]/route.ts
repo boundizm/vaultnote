@@ -18,34 +18,12 @@ export async function GET(
     const { id } = await params;
     const { id: validatedId } = getNoteSchema.parse({ id });
 
-    // Try to get note with new fields, fallback to old schema if migration not done
     let note;
-    try {
-      note = await prisma.note.findUnique({
-        where: { id: validatedId },
-      });
-    } catch (migrationError) {
-      // Fallback for non-migrated database - select only basic fields
-      console.warn('Database migration not applied, using fallback schema:', migrationError);
-      note = await prisma.note.findUnique({
-        where: { id: validatedId },
-        select: {
-          id: true,
-          ciphertext: true,
-          iv: true,
-          remainingReads: true,
-          expiresAt: true,
-          createdAt: true,
-          consumedAt: true,
-          destroyToken: true,
-          isProtected: true,
-          encryptedKey: true,
-          keyIv: true,
-          salt: true,
-          images: true,
-        }
-      });
-    }
+    
+    // Get note with all fields
+    note = await prisma.note.findUnique({
+      where: { id: validatedId },
+    });
 
     if (!note) {
       return NextResponse.json({ error: 'Note not found' }, { status: 404 });
@@ -85,32 +63,24 @@ export async function GET(
     const remainingReadsPreview = note.remainingReads !== null ? note.remainingReads - 1 : null;
 
     return NextResponse.json({
-      // @ts-ignore - Prisma types not updated yet
       title: note.titleEncrypted ? await decryptMetadata(note.titleEncrypted) : null,
-      ciphertext: note.ciphertext.toString('base64'),
-      iv: note.iv.toString('base64'),
+      ciphertext: note.ciphertext,
+      iv: note.iv,
       remainingReadsPreview,
       isProtected: note.isProtected,
-      // @ts-ignore - Prisma types not updated yet
       encryptedKey: note.encryptedKey || null,
-      // @ts-ignore - Prisma types not updated yet
       keyIv: note.keyIv || null,
-      // @ts-ignore - Prisma types not updated yet
       salt: note.salt || null,
       images: note.images ? JSON.parse(note.images) : null,
 
       // Author information (decrypted from encrypted fields)
-      // @ts-ignore - Prisma types not updated yet
       authorName: note.authorNameEncrypted ? await decryptMetadata(note.authorNameEncrypted) : 'Anonymous',
-      // @ts-ignore - Prisma types not updated yet
       authorEmail: note.authorEmailEncrypted ? await decryptMetadata(note.authorEmailEncrypted) : '',
 
       // View tracking
       createdAt: note.createdAt.toISOString(),
       expiresAt: note.expiresAt?.toISOString() || null,
-      // @ts-ignore - Prisma types not updated yet
       viewCount: note.viewCount,
-      // @ts-ignore - Prisma types not updated yet
       maxViews: note.maxViews,
     });
   } catch (error) {

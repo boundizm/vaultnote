@@ -20,10 +20,13 @@ Configure your production environment variables:
 
 ```env
 # PostgreSQL Database URL
-DATABASE_URL="postgresql://username:password@host:port/database?schema=public"
+DATABASE_URL="postgresql://username:password@host:port/database?schema=public&sslmode=require"
 
 # Cron job secret (generate random string)
 CRON_SECRET="your-secure-random-secret-here"
+
+# Next.js URL
+NEXTAUTH_URL="https://yourdomain.com"
 ```
 
 ### 2. Database Setup
@@ -32,10 +35,10 @@ CRON_SECRET="your-secure-random-secret-here"
 # Install dependencies
 pnpm install
 
-# Generate Prisma client
+# Generate Prisma client for PostgreSQL
 pnpm prisma generate
 
-# Deploy database schema
+# Create and run migrations
 pnpm prisma migrate deploy
 ```
 
@@ -55,13 +58,33 @@ pnpm start
 - **End-to-End Encryption**: AES-256-GCM encryption
 - **Zero-Knowledge**: Server never sees plaintext
 - **Client-Side Encryption**: All encryption happens in browser
-- **Secure Metadata**: Titles and author info are encrypted
+- **Secure Metadata**: Titles and author info are encrypted server-side
 
-### Database Schema
+### PostgreSQL Schema
 ```sql
-- Notes: Encrypted content, metadata, view tracking
-- Automatic cleanup of expired notes
-- Index optimization for performance
+-- Notes table with encrypted metadata
+CREATE TABLE "Note" (
+  id TEXT PRIMARY KEY,
+  "titleEncrypted" TEXT,
+  ciphertext TEXT NOT NULL,
+  iv TEXT NOT NULL,
+  "remainingReads" INTEGER,
+  "expiresAt" TIMESTAMP,
+  "createdAt" TIMESTAMP DEFAULT NOW(),
+  "consumedAt" TIMESTAMP,
+  "destroyToken" TEXT UNIQUE,
+  "isProtected" BOOLEAN DEFAULT false,
+  "encryptedKey" TEXT,
+  "keyIv" TEXT,
+  salt TEXT,
+  images TEXT,
+  "authorNameEncrypted" TEXT,
+  "authorEmailEncrypted" TEXT,
+  "viewCount" INTEGER DEFAULT 0,
+  "maxViews" INTEGER
+);
+
+CREATE INDEX "Note_expiresAt_idx" ON "Note"("expiresAt");
 ```
 
 ## 🔧 Development
@@ -70,23 +93,34 @@ pnpm start
 # Install dependencies
 pnpm install
 
-# Start development server
+# Start development server (requires PostgreSQL)
 pnpm dev
-
-# Run tests
-pnpm test
 
 # Database operations
 pnpm prisma studio    # Open database browser
 pnpm prisma migrate dev  # Create new migration
+pnpm prisma db push     # Push schema changes
 ```
 
 ## 🚀 Deployment Options
 
-### Vercel (Recommended)
-1. Connect GitHub repository
-2. Set environment variables in Vercel dashboard
-3. Deploy automatically
+### Vercel + Supabase (Recommended)
+1. **Create Supabase project** → Get PostgreSQL URL
+2. **Deploy to Vercel:**
+   - Connect GitHub repository
+   - Set environment variables:
+     ```
+     DATABASE_URL=postgresql://...
+     CRON_SECRET=your-random-secret
+     NEXTAUTH_URL=https://yourdomain.vercel.app
+     ```
+3. **Deploy!** 🚀
+
+### Railway (All-in-One)
+1. **Connect GitHub** repository
+2. **Add PostgreSQL** service
+3. **Set environment** variables
+4. **Deploy** automatically
 
 ### Docker
 ```dockerfile
@@ -116,6 +150,7 @@ pm2 save
 - Monitor for security vulnerabilities
 - Keep dependencies updated
 - Use environment variables for secrets
+- Enable PostgreSQL SSL in production
 
 ## 📊 Features
 
@@ -124,9 +159,10 @@ pm2 save
 - ✅ Self-destructing notes
 - ✅ Image attachments
 - ✅ View tracking and limits
+- ✅ Encrypted metadata (titles, authors)
 - ✅ Responsive design
 - ✅ Dark theme
-- ✅ Swiss hosting ready
+- ✅ PostgreSQL production-ready
 
 ## 🤝 Contributing
 
@@ -143,16 +179,6 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ---
 
 **Made with ❤️ in Switzerland** 🇨🇭
-
-Privacy-first, Zero-Knowledge Notepad mit Self-Destruct. Erstelle sichere Notizen, die nach dem Lesen oder Ablauf automatisch gelöscht werden.
-
-## Features
-
-- 🔒 **Zero-Knowledge Encryption**: Clientseitige Verschlüsselung, Schlüssel verlässt niemals den Browser
-- ⏰ **Self-Destruct**: Notizen können nach Zeit oder Anzahl der Lesevorgänge gelöscht werden
-- 📝 **Markdown Support**: Rich text editing
-- 🌙 **Dark/Light Mode**: Automatische Theme-Erkennung
-- 🇨🇭 **Swiss Hosting**: Gehostet in der Schweiz mit strengen Datenschutzgesetzen
 - 🚫 **No Tracking**: Keine Cookies, kein Analytics
 
 ## Tech Stack
